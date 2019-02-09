@@ -2,6 +2,7 @@ import re
 import string
 import uuid
 import warnings
+# import logging
 
 from django.conf import settings
 from django.db import models
@@ -141,6 +142,14 @@ class Submission(LogMixin, models.Model):
             'The duration in minutes. Leave empty for default duration for this submission type.'
         ),
     )
+    slot_count = models.PositiveIntegerField(
+        default=1,
+        verbose_name=_('Slot Count'),
+        help_text=_(
+            'How many times this talk will be held. '
+            'Currently only editable by the organiser.'
+        ),
+    )
     content_locale = models.CharField(
         max_length=32,
         default=settings.LANGUAGE_CODE,
@@ -264,6 +273,7 @@ class Submission(LogMixin, models.Model):
             submission_state_change.send_robust(
                 self.event, submission=self, old_state=old_state, user=person
             )
+            self.update_talk_slots()
         else:
             source_states = (
                 src
@@ -288,38 +298,69 @@ class Submission(LogMixin, models.Model):
                 )
             )
 
+    def update_talk_slots(self, slot_count_old=None):
+        from pretalx.schedule.models import TalkSlot
+        # logging.debug('update_talk_slots')
+        # debug: print all now available Talks
+        # qs_temp = TalkSlot.objects.filter(
+        #     submission=self,
+        #     schedule=self.event.wip_schedule,
+        # )
+        # logging.debug('TalkSlots old: {}'.format(
+        #     [i.slot_index for i in qs_temp]))
+        # logging.debug('self.state: {}'.format(self.state))
+        if self.state == SubmissionStates.ACCEPTED or \
+            self.state == SubmissionStates.CONFIRMED:
+            # logging.debug('state is ACCEPTED or CONFIRMED')
+            if slot_count_old is not None:
+                # logging.debug(
+                #     'slot_count_old: {}'.format(slot_count_old))
+                # logging.debug(
+                #     'self.slot_count {}'.format(self.slot_count))
+                range_to_delete = list(range(
+                    self.slot_count, slot_count_old))
+                # logging.debug('range_to_delete: {}'.format(range_to_delete))
+                qs_delete = TalkSlot.objects.filter(
+                    submission=self,
+                    schedule=self.event.wip_schedule,
+                    slot_index__in=range_to_delete,
+                )
+                # logging.debug('qs_delete: {}'.format(
+                #     [i.slot_index for i in qs_delete]))
+                qs_delete.delete()
+            # logging.debug('TalkSlot update_or_create')
+            for index in range(self.slot_count):
+                TalkSlot.objects.update_or_create(
+                    submission=self,
+                    schedule=self.event.wip_schedule,
+                    defaults={'is_visible': True},
+                    slot_index=index,
+                )
+        else:
+            TalkSlot.objects.filter(
+                submission=self, schedule=self.event.wip_schedule
+            ).delete()
+        # debug: print all now available Talks
+        # qs_temp = TalkSlot.objects.filter(
+        #     submission=self,
+        #     schedule=self.event.wip_schedule,
+        # )
+        # logging.debug('TalkSlots new: {}'.format(
+        #     [i.slot_index for i in qs_temp]))
+
     def make_submitted(self, person=None, force=False, orga=False):
         self._set_state(SubmissionStates.SUBMITTED, force, person=person)
-        from pretalx.schedule.models import TalkSlot
-
-        TalkSlot.objects.filter(
-            submission=self, schedule=self.event.wip_schedule
-        ).delete()
 
     def confirm(self, person=None, force=False, orga=False):
         self._set_state(SubmissionStates.CONFIRMED, force, person=person)
         self.log_action('pretalx.submission.confirm', person=person, orga=orga)
-        self.slots.filter(schedule=self.event.wip_schedule).update(is_visible=True)
-        from pretalx.schedule.models import TalkSlot
 
-        TalkSlot.objects.update_or_create(
-            submission=self,
-            schedule=self.event.wip_schedule,
-            defaults={'is_visible': True},
-        )
+        self.slots.filter(schedule=self.event.wip_schedule).update(is_visible=True)
 
     def accept(self, person=None, force=False, orga=True):
         previous = self.state
         self._set_state(SubmissionStates.ACCEPTED, force, person=person)
         self.log_action('pretalx.submission.accept', person=person, orga=True)
-
-        from pretalx.schedule.models import TalkSlot
-
-        TalkSlot.objects.update_or_create(
-            submission=self,
-            schedule=self.event.wip_schedule,
-            defaults={'is_visible': True},
-        )
 
         if previous != SubmissionStates.CONFIRMED:
             for speaker in self.speakers.all():
@@ -334,12 +375,6 @@ class Submission(LogMixin, models.Model):
         self._set_state(SubmissionStates.REJECTED, force, person=person)
         self.log_action('pretalx.submission.reject', person=person, orga=True)
 
-        from pretalx.schedule.models import TalkSlot
-
-        TalkSlot.objects.filter(
-            submission=self, schedule=self.event.wip_schedule
-        ).delete()
-
         for speaker in self.speakers.all():
             self.event.reject_template.to_mail(
                 user=speaker,
@@ -352,31 +387,16 @@ class Submission(LogMixin, models.Model):
         self._set_state(SubmissionStates.CANCELED, force, person=person)
         self.log_action('pretalx.submission.cancel', person=person, orga=True)
 
-        from pretalx.schedule.models import TalkSlot
-
-        TalkSlot.objects.filter(
-            submission=self, schedule=self.event.wip_schedule
-        ).delete()
-
     def withdraw(self, person=None, force=False, orga=False):
         self._set_state(SubmissionStates.WITHDRAWN, force, person=person)
-        from pretalx.schedule.models import TalkSlot
-
-        TalkSlot.objects.filter(
-            submission=self, schedule=self.event.wip_schedule
-        ).delete()
         self.log_action('pretalx.submission.withdraw', person=person, orga=orga)
 
     def remove(self, person=None, force=False, orga=True):
         self._set_state(SubmissionStates.DELETED, force, person=person)
+        self.log_action('pretalx.submission.deleted', person=person, orga=True)
+
         for answer in self.answers.all():
             answer.remove(person=person, force=force)
-        from pretalx.schedule.models import TalkSlot
-
-        TalkSlot.objects.filter(
-            submission=self, schedule=self.event.wip_schedule
-        ).delete()
-        self.log_action('pretalx.submission.deleted', person=person, orga=True)
 
     @cached_property
     def uuid(self):

@@ -44,6 +44,7 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
             'content_locale',
             'do_not_record',
             'duration',
+            'slot_count',
             'image',
             'is_featured',
         ]

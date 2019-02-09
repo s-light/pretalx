@@ -27,9 +27,10 @@ class TalkSlot(LogMixin, models.Model):
     is_visible = models.BooleanField()
     start = models.DateTimeField(null=True)
     end = models.DateTimeField(null=True)
+    slot_index = models.PositiveIntegerField(default=0)
 
     class Meta:
-        unique_together = (('submission', 'schedule'),)
+        unique_together = (('submission', 'schedule', 'slot_index'),)
 
     def __str__(self):
         """Help when debugging."""

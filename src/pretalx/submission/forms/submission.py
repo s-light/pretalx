@@ -47,6 +47,10 @@ class InfoForm(RequestRequire, forms.ModelForm):
                 (a, locale_names[a]) for a in self.event.locales
             ]
 
+        # currently we only display this.
+        # changes only allowed from orga backend.
+        self.fields['slot_count'].disabled = True
+
         if self.readonly:
             for f in self.fields.values():
                 f.disabled = True
@@ -93,6 +97,7 @@ class InfoForm(RequestRequire, forms.ModelForm):
             'abstract',
             'description',
             'notes',
+            'slot_count',
             'do_not_record',
             'image',
         ]
