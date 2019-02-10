@@ -28,6 +28,7 @@ class SpeakerView(PermissionRequired, DetailView):
         obj = kwargs.get('object')
         context = super().get_context_data(**kwargs)
         context['speaker'] = obj.user
+        context['submissions'] = obj.submissions
         context['talks'] = obj.talks
         return context
 
