@@ -24,14 +24,14 @@ from pretalx.submission.models import Feedback, Submission
 
 
 class TalkList(EventPermissionRequired, Filterable, ListView):
-    context_object_name = 'talks'
+    context_object_name = 'talks_distinct'
     model = Submission
     template_name = 'agenda/talks.html'
     permission_required = 'agenda.view_schedule'
     default_filters = ('speakers__name__icontains', 'title__icontains')
 
     def get_queryset(self):
-        return self.filter_queryset(self.request.event.talks)
+        return self.filter_queryset(self.request.event.talks).distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
