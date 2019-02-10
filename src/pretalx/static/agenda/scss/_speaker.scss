@@ -27,6 +27,18 @@
   flex-direction: row;
 
   .talk-content {
+    .talk-slots {
+      padding: 0;
+      list-style: none;
+
+      .talk-slot {
+        color: lighten($gray-800, 25%);
+
+        // font-size: 18px;
+     
+      }
+    }
+
     .abstract {
       margin-top: 1rem;
       margin-bottom: 1rem;

@@ -66,14 +66,14 @@ class TalkView(PermissionRequired, DetailView):
 
     def get_object(self, queryset=None):
         with suppress(AttributeError, TalkSlot.DoesNotExist):
-            return self.request.event.current_schedule.talks.get(
+            return self.request.event.current_schedule.talks.filter(
                 submission__code__iexact=self.kwargs['slug'], is_visible=True
-            )
+            ).first()
         if getattr(self.request, 'is_orga', False):
             with suppress(AttributeError, TalkSlot.DoesNotExist):
-                return self.request.event.wip_schedule.talks.get(
+                return self.request.event.wip_schedule.talks.filter(
                     submission__code__iexact=self.kwargs['slug'], is_visible=True
-                )
+                ).first()
         raise Http404()
 
     @cached_property
@@ -106,26 +106,28 @@ class TalkView(PermissionRequired, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        slot = self.object
+        submission = self.object.submission
         qs = TalkSlot.objects.none()
         if self.request.event.current_schedule:
             qs = self.request.event.current_schedule.talks.filter(is_visible=True)
         elif self.request.is_orga:
             qs = self.request.event.wip_schedule.talks
-        event_talks = qs.exclude(submission=slot.submission)
-        context['submission'] = slot.submission
+        event_talks = qs.exclude(submission=submission)
+        context['submission'] = submission
+        context['talk_slots'] = qs.filter(submission=submission).order_by('start')
         context['submission_description'] = (
-            slot.submission.description
-            or slot.submission.abstract
+            submission.description
+            or submission.abstract
             or _('The talk »{title}« at {event}').format(
-                title=slot.submission.title, event=slot.submission.event.name
+                title=submission.title, event=submission.event.name
             )
         )
         context['recording_iframe'] = self.recording.get('iframe')
         context['speakers'] = []
-        for speaker in slot.submission.speakers.all():
+        for speaker in submission.speakers.all():
             speaker.talk_profile = speaker.event_profile(event=self.request.event)
-            speaker.other_talks = event_talks.filter(submission__speakers__in=[speaker])
+            # with `slot_index__exact=0` we filter multiple appearances out.
+            speaker.other_talks = event_talks.filter(submission__speakers__in=[speaker], slot_index__exact=0)
             context['speakers'].append(speaker)
         return context
 
