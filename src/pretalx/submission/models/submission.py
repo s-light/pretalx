@@ -21,8 +21,6 @@ from pretalx.submission.signals import submission_state_change
 # import logging
 
 
-
-
 def generate_invite_code(length=32):
     return get_random_string(length=length, allowed_chars=Submission.CODE_CHARSET)
 
@@ -32,7 +30,7 @@ class SubmissionError(Exception):
 
 
 def submission_image_path(instance, filename):
-    return f'{instance.event.slug}/images/{instance.code}/{filename}'
+    return f'{instance.event.slug}/images/{instance.code}/{filename}' #noqa
 
 
 class SubmissionStates(Choices):
@@ -313,7 +311,7 @@ class Submission(LogMixin, models.Model):
         #     [i.slot_index for i in qs_temp]))
         # logging.debug('self.state: {}'.format(self.state))
         if self.state == SubmissionStates.ACCEPTED or \
-            self.state == SubmissionStates.CONFIRMED:
+                self.state == SubmissionStates.CONFIRMED:
             # logging.debug('state is ACCEPTED or CONFIRMED')
             if slot_count_old is not None:
                 # logging.debug(
