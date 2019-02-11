@@ -2,7 +2,6 @@ import re
 import string
 import uuid
 import warnings
-# import logging
 
 from django.conf import settings
 from django.db import models
@@ -18,6 +17,10 @@ from pretalx.common.phrases import phrases
 from pretalx.common.urls import EventUrls
 from pretalx.mail.context import template_context_from_submission
 from pretalx.submission.signals import submission_state_change
+
+# import logging
+
+
 
 
 def generate_invite_code(length=32):
