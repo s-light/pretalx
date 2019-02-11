@@ -389,7 +389,7 @@ class SubmissionContent(ActionFromUrl, SubmissionViewMixin, CreateOrUpdateView):
             messages.success(self.request, _('The submission has been updated!'))
         if form.has_changed():
             # handle slot_count change:
-            if 'slot_count' in form.changed_data:
+            if 'slot_count' in form.changed_data and 'slot_count' in form.initial:
                 self.object.update_talk_slots(
                     slot_count_old=form.initial['slot_count'])
             action = 'pretalx.submission.' + ('create' if created else 'update')
