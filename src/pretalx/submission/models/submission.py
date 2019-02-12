@@ -18,8 +18,6 @@ from pretalx.common.urls import EventUrls
 from pretalx.mail.context import template_context_from_submission
 from pretalx.submission.signals import submission_state_change
 
-# import logging
-
 
 def generate_invite_code(length=32):
     return get_random_string(length=length, allowed_chars=Submission.CODE_CHARSET)
@@ -301,53 +299,30 @@ class Submission(LogMixin, models.Model):
 
     def update_talk_slots(self, slot_count_old=None):
         from pretalx.schedule.models import TalkSlot
-        # logging.debug('update_talk_slots')
-        # debug: print all now available Talks
-        # qs_temp = TalkSlot.objects.filter(
-        #     submission=self,
-        #     schedule=self.event.wip_schedule,
-        # )
-        # logging.debug('TalkSlots old: {}'.format(
-        #     [i.slot_index for i in qs_temp]))
-        # logging.debug('self.state: {}'.format(self.state))
         if self.state == SubmissionStates.ACCEPTED or \
                 self.state == SubmissionStates.CONFIRMED:
-            # logging.debug('state is ACCEPTED or CONFIRMED')
             if slot_count_old is not None:
-                # logging.debug(
-                #     'slot_count_old: {}'.format(slot_count_old))
-                # logging.debug(
-                #     'self.slot_count {}'.format(self.slot_count))
                 range_to_delete = list(range(
                     self.slot_count, slot_count_old))
-                # logging.debug('range_to_delete: {}'.format(range_to_delete))
                 qs_delete = TalkSlot.objects.filter(
                     submission=self,
                     schedule=self.event.wip_schedule,
                     slot_index__in=range_to_delete,
                 )
-                # logging.debug('qs_delete: {}'.format(
-                #     [i.slot_index for i in qs_delete]))
                 qs_delete.delete()
-            # logging.debug('TalkSlot update_or_create')
+
+            is_visible = self.state == SubmissionStates.CONFIRMED
             for index in range(self.slot_count):
                 TalkSlot.objects.update_or_create(
                     submission=self,
                     schedule=self.event.wip_schedule,
-                    defaults={'is_visible': True},
+                    defaults={'is_visible': is_visible},
                     slot_index=index,
                 )
         else:
             TalkSlot.objects.filter(
                 submission=self, schedule=self.event.wip_schedule
             ).delete()
-        # debug: print all now available Talks
-        # qs_temp = TalkSlot.objects.filter(
-        #     submission=self,
-        #     schedule=self.event.wip_schedule,
-        # )
-        # logging.debug('TalkSlots new: {}'.format(
-        #     [i.slot_index for i in qs_temp]))
 
     def make_submitted(self, person=None, force=False, orga=False):
         self._set_state(SubmissionStates.SUBMITTED, force, person=person)
