@@ -306,27 +306,10 @@ class Submission(LogMixin, models.Model):
                 submission=self,
                 schedule=self.event.wip_schedule,
             ).count()
-            print('slot_count_current', slot_count_current)
             # get slot_count_target from object
             slot_count_target = self.slot_count
-            print('slot_count_target', slot_count_target)
-
-            print('*** current slots ordered')
-            qs = TalkSlot.objects.filter(
-                submission=self,
-                schedule=self.event.wip_schedule,
-            ).order_by(
-                'start',
-                'room',
-                'slot_index'
-            )
-            for slot in qs:
-                print('*', slot)
-            print('*'*42)
-
 
             # first delete all not scheduled slots
-            print('*** slots to delete')
             qs = TalkSlot.objects.filter(
                 submission=self,
                 schedule=self.event.wip_schedule,
@@ -334,19 +317,10 @@ class Submission(LogMixin, models.Model):
                 room__isnull=True,
             ).order_by(
                 '-slot_index'
-            # )
             )[:slot_count_target]
-            for slot in qs:
-                print('*', slot)
-            print('*'*42)
             talk_ids_to_delete = list(qs.values_list("id", flat=True))
-            print('talk_ids_to_delete', talk_ids_to_delete)
-            deleted_count, deleted_details  = TalkSlot.objects.filter(
-                pk__in=list(talk_ids_to_delete)
-            ).delete()
-            print('deleted_count', deleted_count)
+            TalkSlot.objects.filter(pk__in=talk_ids_to_delete).delete()
 
-            print('*** slots to delete')
             qs = TalkSlot.objects.filter(
                 submission=self,
                 schedule=self.event.wip_schedule,
@@ -355,28 +329,8 @@ class Submission(LogMixin, models.Model):
                 'room',
                 '-slot_index'
             )[slot_count_target:]
-            for slot in qs:
-                print('*', slot)
-            print('*'*42)
             talk_ids_to_delete = list(qs.values_list("id", flat=True))
-            print('talk_ids_to_delete', talk_ids_to_delete)
-            deleted_count, deleted_details  = TalkSlot.objects.filter(
-                pk__in=list(talk_ids_to_delete)
-            ).delete()
-            print('deleted_count', deleted_count)
-
-            print('*** current slots ordered')
-            qs = TalkSlot.objects.filter(
-                submission=self,
-                schedule=self.event.wip_schedule,
-            ).order_by(
-                'start',
-                'room',
-                'slot_index'
-            )
-            for slot in qs:
-                print('*', slot)
-            print('*'*42)
+            TalkSlot.objects.filter(pk__in=talk_ids_to_delete).delete()
 
             # build slot_index to add or update
             # this fills up (with not already existend) indices
@@ -399,19 +353,6 @@ class Submission(LogMixin, models.Model):
                     defaults={'is_visible': is_visible},
                     slot_index=index,
                 )
-
-            print('*** current slots ordered')
-            qs = TalkSlot.objects.filter(
-                submission=self,
-                schedule=self.event.wip_schedule,
-            ).order_by(
-                'start',
-                'room',
-                'slot_index'
-            )
-            for slot in qs:
-                print('*', slot)
-            print('*'*42)
         else:
             TalkSlot.objects.filter(
                 submission=self, schedule=self.event.wip_schedule
