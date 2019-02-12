@@ -3,6 +3,7 @@
 Release Notes
 =============
 
+- :feature:`346` Due to the generous sponsorship of JuliaCon, pretalx is now capable of blind reviews, i.e. making sure that reviewers cannot see speaker names.
 - :feature:`-` The organiser area has now additional, event specific login pages (at /orga/event/<slug>/login/) which redirect by default to the event dashboard, and appear with the color and logo of the event in question.
 - :feature:`-` The review settings have moved from the CfP page to their own settings page.
 - :feature:`-` You can now decide to add the robots=noindex meta tag to prevent bots from crawling your event pages.
@@ -12,7 +13,7 @@ Release Notes
 - :bug:`583` When signing up with an email address with upper case letters included, pretalx only allowed to log in with a lower-cased email address.
 - :bug:`572` People who had only deleted submissions in an event were still shown in the submitter list, which was unexpected and was since fixed.
 - :feature:`-` If only one conference language is available, pretalx doesn't as speakers to choose it from a drop-down, as this behaviour is rather silly.
-- :support:`-` pretalx doesn't run ``regenerate_css`` on startup automatically any longer. This reduces startup times. If for any reason an event does not look as it should, you can fix it by running ``python -m pretalx regenerate_css``.
+- :support:`-` pretalx doesn't run ``regenerate_css`` on startup automatically any longer. This reduces startup times. If for any reason an event does not look as it should, you can fix it by running ``python -m pretalx regenerate_css``. You will also need to execute this command on updates from now on.
 - :feature:`-` You can now decide if you want to notify speakers about their changed talks when releasing a new schedule.
 - :support:`-` To help make other pretalx installations more secure, we've updated our proposed nginx configuration to include an attachment header for all files under /media, to prevent user uploaded data to be delivered directly to other users. If you host a pretalx instance, please make use of this option.
 - :feature:`-` Since SVG files are nearly impossible to sanitize, pretalx has given up trying, and will no longer accept SVG files as image uploads.
