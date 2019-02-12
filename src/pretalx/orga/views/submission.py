@@ -390,8 +390,7 @@ class SubmissionContent(ActionFromUrl, SubmissionViewMixin, CreateOrUpdateView):
         if form.has_changed():
             # handle slot_count change:
             if 'slot_count' in form.changed_data and 'slot_count' in form.initial:
-                self.object.update_talk_slots(
-                    slot_count_old=form.initial['slot_count'])
+                self.object.update_talk_slots()
             action = 'pretalx.submission.' + ('create' if created else 'update')
             form.instance.log_action(action, person=self.request.user, orga=True)
         return redirect(self.get_success_url())
