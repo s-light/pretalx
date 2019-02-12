@@ -143,33 +143,15 @@ class Schedule(LogMixin, models.Model):
             result['action'] = 'create'
             return result
 
-        # ******************************************
-        # build list of all new talks without link to schedule
-        # from pretalx.submission.models import Submission
-        # qs = Submission.objects.filter(
-        #     id__in=self.scheduled_talks.values_list('submission', flat=True)
-        # )
-        # print('qs')
-        # for slot in qs:
-        #     print(slot)
-        # #
-        #
-        # print('****')
-
         new_slots_qs = self.talks.select_related(
             'submission', 'submission__event', 'room'
         ).all().filter(
             is_visible=True,
             room__isnull=False,
-            # start__isnull=False,
+            start__isnull=False,
         ).exclude(
             submission__state=SubmissionStates.DELETED,
         )
-        # print('new_slots_qs')
-        # for slot in new_slots_qs:
-        #     print(slot)
-        #
-        #
         old_slots_qs = self.previous_schedule.talks.select_related(
             'submission', 'submission__event', 'room'
         ).all().filter(
@@ -177,21 +159,6 @@ class Schedule(LogMixin, models.Model):
         ).exclude(
             submission__state=SubmissionStates.DELETED,
         )
-        # from pretalx.schedule.models import TalkSlot
-        # old_slots_qs = TalkSlot.objects.select_related(
-        #     'submission', 'submission__event', 'room'
-        # ).filter(
-        #     submission__in=self.previous_schedule.talks.values_list('submission', flat=True),
-        #     slot_index__in=self.previous_schedule.talks.values_list('slot_index', flat=True),
-        # ).filter(
-        #     is_visible=True,
-        # ).exclude(
-        #     submission__state=SubmissionStates.DELETED,
-        # )
-        # print('old_slots_qs')
-        # for slot in old_slots_qs:
-        #     print(slot)
-        # print('')
 
         new_slots = set(
             talk
@@ -208,106 +175,29 @@ class Schedule(LogMixin, models.Model):
             ).all()
             if talk.is_visible and not talk.submission.is_deleted
         )
+
+        # build helper set of talks containing only submission and slot_index
+        # with this we can use the set comparing methodes..
         new_slots_helper = set(
             (talk.submission, talk.slot_index) for talk in new_slots
         )
         old_slots_helper = set(
             (talk.submission, talk.slot_index) for talk in old_slots
         )
-        print('*'*42)
-        print('new_slots')
-        for slot in new_slots:
-            print(slot)
-        print('')
-        print('old_slots')
-        for slot in old_slots:
-            print(slot)
-        print('')
-        print('new_slots_helper')
-        for slot in new_slots_helper:
-            print(slot)
-        print('')
-        print('old_slots_helper')
-        for slot in old_slots_helper:
-            print(slot)
-        print('')
-
-        # print('symmetric_difference qs ^ new_slots')
-        # for slot in set(qs) ^ new_slots:
-        #     print('*', slot)
-        # print('****')
-        # print('symmetric_difference qs ^ old_slots')
-        # for slot in set(qs) ^ old_slots:
-        #     print('*', slot)
-        # print('****')
-
-
-
-        # new_submissions = set(talk.submission for talk in new_slots)
-        # old_submissions = set(talk.submission for talk in old_slots)
-        #
-        # new_slot_by_submission = {talk.submission: talk for talk in new_slots}
-        # old_slot_by_submission = {talk.submission: talk for talk in old_slots}
-        #
-        # result['new_talks'] = [
-        #     new_slot_by_submission.get(s) for s in new_submissions - old_submissions
-        # ]
-        # result['canceled_talks'] = [
-        #     old_slot_by_submission.get(s) for s in old_submissions - new_submissions
-        # ]
-
-
-        # result['new_talks'] = [new_slots - old_slots]
-        # result['canceled_talks'] = [old_slots - new_slots]
-
-        # print('**** new_slots_helper - old_slots_helper')
-        # for slot in new_slots_helper - old_slots_helper:
-        #     print('*', slot)
-        # print('****')
 
         from pretalx.schedule.models import TalkSlot
-        # result['new_talks'] = [
-        #     new_slots_qs.get(submission=s[0], slot_index=s[1]) for s in new_slots_helper - old_slots_helper
-        # ]
+
         result['new_talks'] = []
         for s in new_slots_helper - old_slots_helper:
             with suppress(AttributeError, TalkSlot.DoesNotExist):
                 result['new_talks'].append(
                     new_slots_qs.get(submission=s[0], slot_index=s[1]))
 
-        # print('**** old_slots_helper - new_slots_helper')
-        # for slot in old_slots_helper - new_slots_helper:
-        #     print('*', slot)
-        # print('****')
-        # result['canceled_talks'] = [
-        #     old_slots_qs.get(submission=s[0], slot_index=s[1]) for s in old_slots_helper - new_slots_helper
-        # ]
         result['canceled_talks'] = []
         for s in old_slots_helper - new_slots_helper:
             with suppress(AttributeError, TalkSlot.DoesNotExist):
                 result['canceled_talks'].append(
                     old_slots_qs.get(submission=s[0], slot_index=s[1]))
-
-
-        # result['new_talks'] = [
-        #     s for s in new_slots - old_slots
-        # ]
-        # result['canceled_talks'] = [
-        #     s for s in old_slots - new_slots
-        # ]
-        print('new_talks')
-        for slot in result['new_talks']:
-            print(slot)
-        print('canceled_talks')
-        for slot in result['canceled_talks']:
-            print(slot)
-        print('****')
-
-        # result['new_talks'] = []
-        # for talk in new_slots:
-        #     if talk.submission in old_slots:
-        #         pass
-
 
         for talk in new_slots_helper & old_slots_helper:
             with suppress(AttributeError, TalkSlot.DoesNotExist):
@@ -330,26 +220,6 @@ class Schedule(LogMixin, models.Model):
                                 'new_info': new_slot.room.speaker_info,
                             }
                         )
-
-        # for submission in new_submissions & old_submissions:
-        #     old_slot = old_slot_by_submission.get(submission)
-        #     new_slot = new_slot_by_submission.get(submission)
-        #     if new_slot.room and not old_slot.room:
-        #         result['new_talks'].append(new_slot)
-        #     elif not new_slot.room and old_slot.room:
-        #         result['canceled_talks'].append(new_slot)
-        #     elif old_slot.start != new_slot.start or old_slot.room != new_slot.room:
-        #         if new_slot.room:
-        #             result['moved_talks'].append(
-        #                 {
-        #                     'submission': submission,
-        #                     'old_start': old_slot.start.astimezone(tz),
-        #                     'new_start': new_slot.start.astimezone(tz),
-        #                     'old_room': old_slot.room.name,
-        #                     'new_room': new_slot.room.name,
-        #                     'new_info': new_slot.room.speaker_info,
-        #                 }
-        #             )
 
         result['count'] = (
             len(result['new_talks'])
