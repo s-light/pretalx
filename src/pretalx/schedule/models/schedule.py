@@ -156,6 +156,8 @@ class Schedule(LogMixin, models.Model):
             'submission', 'submission__event', 'room'
         ).all().filter(
             is_visible=True,
+            room__isnull=False,
+            start__isnull=False,
         ).exclude(
             submission__state=SubmissionStates.DELETED,
         )
