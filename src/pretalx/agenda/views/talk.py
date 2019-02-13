@@ -108,11 +108,16 @@ class TalkView(PermissionRequired, DetailView):
         context = super().get_context_data(**kwargs)
         submission = self.object.submission
         qs = TalkSlot.objects.none()
+        schedule = Schedule.objects.none()
         if self.request.event.current_schedule:
-            qs = self.request.event.current_schedule.talks.filter(is_visible=True)
+            schedule = self.request.event.current_schedule
+            qs = schedule.talks.filter(is_visible=True)
         elif self.request.is_orga:
-            qs = self.request.event.wip_schedule.talks
-        event_talks = qs.exclude(submission=submission)
+            schedule = self.request.event.wip_schedule
+            qs = schedule.talks
+        submissions = schedule.slots
+        other_submissions = submissions.exclude(id=submission.id)
+
         context['submission'] = submission
         context['talk_slots'] = qs.filter(submission=submission).order_by('start')
         context['submission_description'] = (
@@ -126,8 +131,7 @@ class TalkView(PermissionRequired, DetailView):
         context['speakers'] = []
         for speaker in submission.speakers.all():
             speaker.talk_profile = speaker.event_profile(event=self.request.event)
-            # with `slot_index__exact=0` we filter multiple appearances out.
-            speaker.other_talks = event_talks.filter(submission__speakers__in=[speaker], slot_index__exact=0)
+            speaker.other_submissions = other_submissions.filter(speakers__in=[speaker])
             context['speakers'].append(speaker)
         return context
 
