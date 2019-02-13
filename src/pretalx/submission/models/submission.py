@@ -145,8 +145,7 @@ class Submission(LogMixin, models.Model):
         default=1,
         verbose_name=_('Slot Count'),
         help_text=_(
-            'How many times this talk will be held. '
-            'Currently only editable by the organiser.'
+            'How many times this talk will be held.'
         ),
     )
     content_locale = models.CharField(
@@ -364,8 +363,6 @@ class Submission(LogMixin, models.Model):
     def confirm(self, person=None, force=False, orga=False):
         self._set_state(SubmissionStates.CONFIRMED, force, person=person)
         self.log_action('pretalx.submission.confirm', person=person, orga=orga)
-
-        self.slots.filter(schedule=self.event.wip_schedule).update(is_visible=True)
 
     def accept(self, person=None, force=False, orga=True):
         previous = self.state
