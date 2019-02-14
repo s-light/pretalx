@@ -1,8 +1,12 @@
 .talk-title small {
-  color: lighten($gray-800, 25%);
   font-size: 18px;
   padding-top: 5px;
   display: block;
+}
+
+.talk-title small,
+.talk-slot {
+  color: lighten($gray-800, 25%);
 }
 
 .talk.feedback-list {
@@ -30,13 +34,6 @@
     .talk-slots {
       padding: 0;
       list-style: none;
-
-      .talk-slot {
-        color: lighten($gray-800, 25%);
-
-        // font-size: 18px;
-     
-      }
     }
 
     .abstract {
