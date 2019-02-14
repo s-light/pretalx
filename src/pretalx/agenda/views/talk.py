@@ -114,9 +114,9 @@ class TalkView(PermissionRequired, DetailView):
             qs = schedule.talks.filter(is_visible=True)
         elif self.request.is_orga:
             schedule = self.request.event.wip_schedule
-            qs = schedule.talks
-        submissions = schedule.slots
-        other_submissions = submissions.exclude(id=submission.id)
+            qs = schedule.talks.all()
+        # schedule.slots returns submissions
+        other_submissions = schedule.slots.exclude(id=submission.id)
 
         context['submission'] = submission
         context['talk_slots'] = qs.filter(submission=submission).order_by('start')
