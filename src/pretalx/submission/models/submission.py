@@ -298,6 +298,7 @@ class Submission(LogMixin, models.Model):
 
     def update_talk_slots(self):
         from pretalx.schedule.models import TalkSlot
+
         if self.state == SubmissionStates.ACCEPTED or \
                 self.state == SubmissionStates.CONFIRMED:
             # get slot_count_current from db
@@ -307,51 +308,53 @@ class Submission(LogMixin, models.Model):
             ).count()
             # get slot_count_target from object
             slot_count_target = self.slot_count
+            delete_count = slot_count_current - slot_count_target
 
-            # first delete all not scheduled slots
-            qs = TalkSlot.objects.filter(
-                submission=self,
-                schedule=self.event.wip_schedule,
-                start__isnull=True,
-                room__isnull=True,
-            ).order_by(
-                '-slot_index'
-            )[:slot_count_target]
-            talk_ids_to_delete = list(qs.values_list("id", flat=True))
-            TalkSlot.objects.filter(pk__in=talk_ids_to_delete).delete()
-
-            qs = TalkSlot.objects.filter(
-                submission=self,
-                schedule=self.event.wip_schedule,
-            ).order_by(
-                'start',
-                'room',
-                '-slot_index'
-            )[slot_count_target:]
-            talk_ids_to_delete = list(qs.values_list("id", flat=True))
-            TalkSlot.objects.filter(pk__in=talk_ids_to_delete).delete()
-
-            # build slot_index to add or update
-            # this fills up (with not already existend) indices
-            # from 0 to the highest needed..
-            slot_index_list = list(TalkSlot.objects.filter(
-                submission=self,
-                schedule=self.event.wip_schedule,
-            ).values_list("slot_index", flat=True))
-            index_range = iter(range(slot_count_target))
-            while len(slot_index_list) < slot_count_target:
-                new_index = next(index_range)
-                if new_index not in slot_index_list:
-                    slot_index_list.append(new_index)
-
-            is_visible = self.state == SubmissionStates.CONFIRMED
-            for index in slot_index_list:
-                TalkSlot.objects.update_or_create(
+            if delete_count > 0:
+                # first delete as many unsheduled slots as possible...
+                # build a list of all ids to delete
+                # this step is needed as the delete operation
+                # does not work on sliced querysets
+                # https://stackoverflow.com/a/20996456/574981
+                talks_to_delete = TalkSlot.objects.filter(
                     submission=self,
                     schedule=self.event.wip_schedule,
-                    defaults={'is_visible': is_visible},
-                    slot_index=index,
+                    room__isnull=True,
+                    start__isnull=True,
+                )[:delete_count].values_list("id", flat=True)
+                TalkSlot.objects.filter(pk__in=list(talks_to_delete)).delete()
+
+                # check if we have left any slots to delete
+                # if yes we remove the slots starting from the last one (in time)..
+                slot_count_current = TalkSlot.objects.filter(
+                    submission=self,
+                    schedule=self.event.wip_schedule,
+                ).count()
+                delete_count = slot_count_current - slot_count_target
+                if delete_count > 0:
+                    talks_to_delete = TalkSlot.objects.filter(
+                        submission=self,
+                        schedule=self.event.wip_schedule,
+                        room__isnull=False,
+                        start__isnull=False,
+                    ).order_by(
+                        '-start',
+                        'room'
+                    )[:delete_count].values_list("id", flat=True)
+                    TalkSlot.objects.filter(pk__in=list(talks_to_delete)).delete()
+
+            is_visible = (self.state == SubmissionStates.CONFIRMED)
+            for index in range(slot_count_current, slot_count_target):
+                TalkSlot.objects.create(
+                    submission=self,
+                    schedule=self.event.wip_schedule,
+                    is_visible=is_visible
                 )
+            # update all others visibility
+            TalkSlot.objects.filter(
+                submission=self,
+                schedule=self.event.wip_schedule,
+            ).update(is_visible=is_visible)
         else:
             TalkSlot.objects.filter(
                 submission=self, schedule=self.event.wip_schedule

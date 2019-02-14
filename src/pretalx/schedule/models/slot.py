@@ -27,15 +27,15 @@ class TalkSlot(LogMixin, models.Model):
     is_visible = models.BooleanField()
     start = models.DateTimeField(null=True)
     end = models.DateTimeField(null=True)
-    slot_index = models.PositiveIntegerField(default=0)
+    # slot_index = models.PositiveIntegerField(default=0)
 
-    class Meta:
-        unique_together = (('submission', 'schedule', 'slot_index'),)
+    # class Meta:
+    #     unique_together = (('submission', 'schedule', 'slot_index'),)
 
     def __str__(self):
         """Help when debugging."""
         # return f'TalkSlot(event={self.submission.event.slug}, submission={self.submission.title}, schedule={self.schedule.version})'
-        return f'TalkSlot(event={self.submission.event.slug}, submission={self.submission.title}, schedule={self.schedule.version}, room={self.room}, start={self.start}, slot_index={self.slot_index})'  # noqa
+        return f'TalkSlot(id={self.id:>03}, event={self.submission.event.slug}, submission={self.submission.title}, schedule={self.schedule.version}, room={self.room}, start={self.start})'  # noqa
 
     @cached_property
     def event(self):
