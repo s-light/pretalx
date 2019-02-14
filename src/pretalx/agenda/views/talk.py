@@ -19,6 +19,7 @@ from pretalx.common.mixins.views import (
 from pretalx.common.phrases import phrases
 from pretalx.person.models.profile import SpeakerProfile
 from pretalx.schedule.models import TalkSlot
+from pretalx.schedule.models import Schedule
 from pretalx.submission.forms import FeedbackForm
 from pretalx.submission.models import Feedback, Submission
 
