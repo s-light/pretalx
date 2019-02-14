@@ -29,7 +29,6 @@ class SpeakerView(PermissionRequired, DetailView):
         context = super().get_context_data(**kwargs)
         context['speaker'] = obj.user
         context['talks_distinct'] = obj.talks.distinct()
-        context['talks'] = obj.talks
         return context
 
 
