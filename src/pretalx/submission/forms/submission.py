@@ -47,9 +47,17 @@ class InfoForm(RequestRequire, forms.ModelForm):
                 (a, locale_names[a]) for a in self.event.locales
             ]
 
-        # currently we only display this.
-        # changes only allowed from orga backend.
-        self.fields['slot_count'].disabled = True
+        # changes only allowed if not accepted or confirmed allready.
+        if instance and (
+                instance.state == SubmissionStates.ACCEPTED or
+                instance.state == SubmissionStates.CONFIRMED):
+            self.fields['slot_count'].disabled = True
+            self.fields['slot_count'].help_text += (
+                _(' Locked - for changing see ') +
+                '<a href="#change_info">' +
+                str(_('this information')) +
+                '</a>.'
+            )
 
         if self.readonly:
             for f in self.fields.values():
