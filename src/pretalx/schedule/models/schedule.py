@@ -146,7 +146,7 @@ class Schedule(LogMixin, models.Model):
         old_slots_qs = self.previous_schedule.talks.select_related(
             'submission', 'submission__event', 'room'
         ).all().filter(
-            is_visible=True,
+            # is_visible=True,
             room__isnull=False,
             start__isnull=False,
         ).exclude(
@@ -160,7 +160,7 @@ class Schedule(LogMixin, models.Model):
         new_slots_qs = self.talks.select_related(
             'submission', 'submission__event', 'room'
         ).all().filter(
-            is_visible=True,
+            # is_visible=True,
             room__isnull=False,
             start__isnull=False,
         ).exclude(

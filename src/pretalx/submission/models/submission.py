@@ -343,22 +343,20 @@ class Submission(LogMixin, models.Model):
                     )[:delete_count].values_list("id", flat=True)
                     TalkSlot.objects.filter(pk__in=list(talks_to_delete)).delete()
 
-            is_visible = (self.state == SubmissionStates.CONFIRMED)
             for index in range(slot_count_current, slot_count_target):
                 TalkSlot.objects.create(
                     submission=self,
                     schedule=self.event.wip_schedule,
-                    is_visible=is_visible
                 )
-            # update all others visibility
-            TalkSlot.objects.filter(
-                submission=self,
-                schedule=self.event.wip_schedule,
-            ).update(is_visible=is_visible)
         else:
             TalkSlot.objects.filter(
                 submission=self, schedule=self.event.wip_schedule
             ).delete()
+        # update visibility
+        # TalkSlot.objects.filter(
+        #     submission=self,
+        #     schedule=self.event.wip_schedule,
+        # ).update(is_visible=(self.state == SubmissionStates.CONFIRMED))
 
     def make_submitted(self, person=None, force=False, orga=False):
         self._set_state(SubmissionStates.SUBMITTED, force, person=person)

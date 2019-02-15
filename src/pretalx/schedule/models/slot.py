@@ -24,7 +24,7 @@ class TalkSlot(LogMixin, models.Model):
     schedule = models.ForeignKey(
         to='schedule.Schedule', on_delete=models.PROTECT, related_name='talks'
     )
-    is_visible = models.BooleanField()
+    is_visible = models.BooleanField(default=False)
     start = models.DateTimeField(null=True)
     end = models.DateTimeField(null=True)
     # slot_index = models.PositiveIntegerField(default=0)
