@@ -84,7 +84,6 @@
     </form>
 </div>
 
-{% has_perm 'orga.view_speakers' request.user request.event as can_view_speakers %}
 
 <table class="table table-sm review-table table-hover table-responsive-md">
     <thead>
@@ -92,7 +91,7 @@
             <th>{% trans "Score" %} <i class="fa fa-caret-down"></i></th>
             <th>{% trans "Reviews" %}</th>
             <th>{% trans "Title" %}</th>
-            {% if can_view_speakers %}<th>{% trans "Speakers" %}</th>{% endif %}
+            <th>{% trans "Speakers" %}</th>
             <th>{% trans "Type" %}</th>
             <th>{% trans "State" %}</th>
             <th></th>
@@ -125,7 +124,7 @@
                     {{ submission.title }}
                 </a>
             </td>
-            {% if can_view_speakers %}<td>{{ submission.display_speaker_names }}</td>{% endif %}
+            <td>{{ submission.display_speaker_names }}</td>
             <td>{{ submission.submission_type.name }}</td>
             <td class="col-md-1">
                 {% include "cfp/event/fragment_state.html" with state=submission.state %}

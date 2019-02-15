@@ -6,7 +6,11 @@
 <div>
     {% if team.pk %}
     <h2>
-        {% trans "Team" %} »{{ team.name }}«: {% trans "Members" %}
+        {% if team %}
+            {% trans "Team" %} »{{ team.name }}«: {% trans "Members" %}
+        {% else %}
+            {% trans "New team" %}
+        {% endif %}
     </h2>
 
     <form method="post">{% csrf_token %}
@@ -73,8 +77,6 @@
     <h3 id="permissions">
         {% trans "Team" %} »{{ team.name }}«: {% trans "Permissions" %}
     </h3>
-    {% else %}
-    <h2>{% trans "New team" %}</h2>
     {% endif %}
 
     <form method="post">
