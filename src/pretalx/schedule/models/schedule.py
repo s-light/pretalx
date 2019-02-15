@@ -143,33 +143,6 @@ class Schedule(LogMixin, models.Model):
             result['action'] = 'create'
             return result
 
-        # old_slots = set(
-        #     talk
-        #     for talk in self.previous_schedule.talks.select_related(
-        #         'submission', 'submission__event', 'room'
-        #     ).all()
-        #     if talk.is_visible and not talk.submission.is_deleted
-        # )
-        # new_slots = set(
-        #     talk
-        #     for talk in self.talks.select_related(
-        #         'submission', 'submission__event', 'room'
-        #     ).all()
-        #     if talk.is_visible and not talk.submission.is_deleted
-        # )
-        #
-        # print('*** orig old_slots')
-        # print('* len:', len(old_slots))
-        # for slot in old_slots:
-        #     print('*', slot)
-        # print('*** orig new_slots')
-        # print('* len:', len(new_slots))
-        # for slot in new_slots:
-        #     print('*', slot)
-        # print('***')
-
-
-
         old_slots_qs = self.previous_schedule.talks.select_related(
             'submission', 'submission__event', 'room'
         ).all().filter(
@@ -238,23 +211,23 @@ class Schedule(LogMixin, models.Model):
             print(f'* {slot.submission_id:>02} ', slot)
         print('***')
 
-        #
-        # test_slots_qs = self.talks.filter(
-        #     # is_visible=True,
-        #     # room__isnull=False,
-        #     # start__isnull=False,
-        # ).exclude(
-        #     submission__state=SubmissionStates.DELETED,
-        # ).order_by(
-        #     'submission',
-        #     'room',
-        #     'start',
-        # )
-        # print('*** test_slots_qs')
-        # print('* count:', test_slots_qs.count())
-        # for slot in test_slots_qs:
-        #     print(f'* {slot.submission_id:>02} ', slot)
-        # print('***')
+
+        test_slots_qs = self.talks.filter(
+            # is_visible=True,
+            # room__isnull=False,
+            # start__isnull=False,
+        ).exclude(
+            submission__state=SubmissionStates.DELETED,
+        ).order_by(
+            'submission',
+            'room',
+            'start',
+        )
+        print('*** test_slots_qs')
+        print('* count:', test_slots_qs.count())
+        for slot in test_slots_qs:
+            print(f'* {slot.submission_id:>02} ', slot)
+        print('***')
 
         # print(f'*** old_slots_helper ({len(old_slots_helper)})')
         # for slot in old_slots_helper:
@@ -317,25 +290,25 @@ class Schedule(LogMixin, models.Model):
         )
 
         print(f'*** slots_helper_symetric_dif ({len(slots_helper_symetric_dif)})')
-        for slot in slots_helper_symetric_dif:
-            print('*', slot)
+        for slot_helper in slots_helper_symetric_dif:
+            print('*', slot_helper)
 
         # slots_helper_symetric_dif__rooms_start = list(slot.start for slot in slots_helper_symetric_dif)
         slots_helper_symetric_dif__rooms_start = {}
-        for slot in slots_helper_symetric_dif:
-            if slot.room not in slots_helper_symetric_dif__rooms_start:
-                slots_helper_symetric_dif__rooms_start[slot.room] = []
-            slots_helper_symetric_dif__rooms_start[slot.room].append(slot.start)
+        for slot_helper in slots_helper_symetric_dif:
+            if slot_helper.room not in slots_helper_symetric_dif__rooms_start:
+                slots_helper_symetric_dif__rooms_start[slot_helper.room] = []
+            slots_helper_symetric_dif__rooms_start[slot_helper.room].append(slot_helper.start)
 
         print(f'*** slots_helper_symetric_dif__rooms_start ({len(slots_helper_symetric_dif__rooms_start)})')
-        for room in slots_helper_symetric_dif__rooms_start.items():
-            print('*', room)
+        for item in slots_helper_symetric_dif__rooms_start.items():
+            print('*', item)
 
         slots_helper_symetric_dif__room = list(slot.room for slot in slots_helper_symetric_dif)
 
         print(f'*** slots_helper_symetric_dif__room ({len(slots_helper_symetric_dif__room)})')
-        for room in slots_helper_symetric_dif__room:
-            print('*', room)
+        for room_helper in slots_helper_symetric_dif__room:
+            print('*', room_helper)
 
 
         def search_nearest_match(slot, slots_qs, other_slots_qs, other_slots_helper):
@@ -418,11 +391,20 @@ class Schedule(LogMixin, models.Model):
                 print('#   temp_slot_namedtuple', temp_slot_namedtuple)
                 if (temp_slot_namedtuple in other_slots_helper):
                     print('#   found!')
-                    print('#   : room', room)
-                    print('#   : slot.start', slot.start)
-                    print('#   : temp_slot_namedtuple.start', temp_slot_namedtuple.start)
-                    slots_helper_symetric_dif__rooms_start[room].remove(slot.start)
+                    # print('#   : room', room)
+                    # print('#   : slot.room.id', slot.room.id)
+                    # print('#   : slot.start', slot.start)
+                    # print('#   : temp_slot_namedtuple.start', temp_slot_namedtuple.start)
+                    # print('#   : slots_helper_symetric_dif__rooms_start[slot.room.id]', slots_helper_symetric_dif__rooms_start[slot.room.id])
+                    # print('#   : slots_helper_symetric_dif__rooms_start[room]', slots_helper_symetric_dif__rooms_start[room])
+                    slots_helper_symetric_dif__rooms_start[slot.room.id].remove(slot.start)
+                    # print('#   : → rooms_start[room].remove(slot.start) done.')
+                    # print('#   : slots_helper_symetric_dif__rooms_start[slot.room.id]', slots_helper_symetric_dif__rooms_start[slot.room.id])
+                    # print('#   : slots_helper_symetric_dif__rooms_start[room]', slots_helper_symetric_dif__rooms_start[room])
                     slots_helper_symetric_dif__rooms_start[room].remove(temp_slot_namedtuple.start)
+                    # print('#   : → rooms_start[room].remove(temp_slot_namedtuple.start) done.')
+                    # print('#   : slots_helper_symetric_dif__rooms_start[slot.room.id]', slots_helper_symetric_dif__rooms_start[slot.room.id])
+                    # print('#   : slots_helper_symetric_dif__rooms_start[room]', slots_helper_symetric_dif__rooms_start[room])
                     # slots_helper_already_handled.append(slot)
                     slots_helper_already_handled.append(temp_slot_namedtuple)
                     result =  temp_slot
@@ -431,77 +413,89 @@ class Schedule(LogMixin, models.Model):
         print('')
         print('*'*42)
         print('handle this')
-        for slot in slots_helper_symetric_dif:
+        for slot_helper in slots_helper_symetric_dif:
             print('*'*42)
-            print('*** ', slot)
-            if slot not in slots_helper_already_handled:
+            print('*** ', slot_helper)
+            if slot_helper not in slots_helper_already_handled:
                 # get original database entries
                 old_slot = None
                 try:
                     old_slot = old_slots_qs.get(
-                        submission=slot.submission,
-                        start=slot.start,
-                        room=slot.room,
+                        submission=slot_helper.submission,
+                        start=slot_helper.start,
+                        room=slot_helper.room,
                     )
                 except TalkSlot.DoesNotExist as e:
                     pass
                 new_slot = None
                 try:
                     new_slot = new_slots_qs.get(
-                        submission=slot.submission,
-                        start=slot.start,
-                        room=slot.room,
+                        submission=slot_helper.submission,
+                        start=slot_helper.start,
+                        room=slot_helper.room,
                     )
                 except TalkSlot.DoesNotExist as e:
                     pass
                 print('* → old', old_slot)
                 print('* → new', new_slot)
-                if old_slot and slot.submission not in new_slots_helper_submission:
-                    # check for canceled
+                # print('* check what to do:')
+                # print('* . slot_helper.submission', slot_helper.submission)
+                # print('* . slot_helper.submission not in new_slots_helper_submission', slot_helper.submission not in new_slots_helper_submission)
+                # print('* . slot_helper.submission not in old_slots_helper_submission', slot_helper.submission not in old_slots_helper_submission)
+                # if old_slot and (slot_helper.submission not in new_slots_helper_submission):
+                #     # check for canceled
+                #     print('* → → canceled')
+                #     slots_helper_already_handled.append(slot_helper)
+                #     result['canceled_talks'].append(old_slot)
+                # elif new_slot and slot_helper.submission not in old_slots_helper_submission:
+                #     # check for new
+                #     print('* → → new')
+                #     slots_helper_already_handled.append(slot_helper)
+                #     result['new_talks'].append(new_slot)
+                # find first element from other set that matches the submission
+                if new_slot:
+                    print('*  we have new_slot so let us search for old_slot...')
+                    old_slot = search_nearest_match(
+                        new_slot,
+                        new_slots_qs,
+                        old_slots_qs,
+                        old_slots_helper
+                    )
+                elif old_slot:
+                    print('*  we have old_slot so let us search for new_slot...')
+                    new_slot = search_nearest_match(
+                        old_slot,
+                        old_slots_qs,
+                        new_slots_qs,
+                        new_slots_helper
+                    )
+                print('* → old', old_slot)
+                print('* → new', new_slot)
+                # if we have found both this is a move.
+                if old_slot and new_slot:
+                    print('* → → moved')
+                    slots_helper_already_handled.append(slot_helper)
+                    result['moved_talks'].append(
+                        {
+                            'submission': new_slot.submission,
+                            'old_start': old_slot.start.astimezone(tz),
+                            'new_start': new_slot.start.astimezone(tz),
+                            'old_room': old_slot.room.name,
+                            'new_room': new_slot.room.name,
+                            'new_info': new_slot.room.speaker_info,
+                        }
+                    )
+                elif old_slot and not new_slot:
                     print('* → → canceled')
-                    slots_helper_already_handled.append(slot)
+                    slots_helper_already_handled.append(slot_helper)
                     result['canceled_talks'].append(old_slot)
-                elif new_slot and slot.submission not in old_slots_helper_submission:
+                elif not old_slot and new_slot:
                     # check for new
                     print('* → → new')
-                    slots_helper_already_handled.append(slot)
+                    slots_helper_already_handled.append(slot_helper)
                     result['new_talks'].append(new_slot)
                 else:
-                    # this could be a move..
-                    print('* → → moved??')
-                    # find first element from other set that matches the submission
-                    if new_slot:
-                        print('*  we have new_slot so let us search for old_slot...')
-                        old_slot = search_nearest_match(
-                            new_slot,
-                            new_slots_qs,
-                            old_slots_qs,
-                            old_slots_helper
-                        )
-                    elif old_slot:
-                        print('*  we have old_slot so let us search for new_slot...')
-                        new_slot = search_nearest_match(
-                            old_slot,
-                            old_slots_qs,
-                            new_slots_qs,
-                            new_slots_helper
-                        )
-                    print('* → old', old_slot)
-                    print('* → new', new_slot)
-                    # if we have found something this is a move.
-                    if old_slot and new_slot:
-                        print('* → → moved!!!')
-                        slots_helper_already_handled.append(slot)
-                        result['moved_talks'].append(
-                            {
-                                'submission': new_slot.submission,
-                                'old_start': old_slot.start.astimezone(tz),
-                                'new_start': new_slot.start.astimezone(tz),
-                                'old_room': old_slot.room.name,
-                                'new_room': new_slot.room.name,
-                                'new_info': new_slot.room.speaker_info,
-                            }
-                        )
+                    raise Exception('slot not found! - uhh - that should never happen!')
             else:
                 print('* skip! (already handled)')
             print(f'* slots_helper_already_handled ({len(slots_helper_already_handled)})')
