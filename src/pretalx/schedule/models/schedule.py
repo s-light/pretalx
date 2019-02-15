@@ -186,31 +186,32 @@ class Schedule(LogMixin, models.Model):
             named=True
         ))
 
-        old_slots_helper_submission = set(old_slots_qs.values_list(
-            'submission',
-            # named=True
-            flat=True
-        ))
-        new_slots_helper_submission = set(new_slots_qs.values_list(
-            'submission',
-            # named=True
-            flat=True
-        ))
-
-        # combined_helper_submissions = old_slots_helper_submission | new_slots_helper_submission
-
         print('*** old_slots_qs')
         print('* count:', old_slots_qs.count())
         for slot in old_slots_qs:
-            print(f'* {slot.submission_id:>02} ', slot)
+            print(
+                f'* {slot.submission_id:>02} ',
+                f'{str(slot.is_visible):<5} ',
+                slot
+            )
         print('***')
 
         print('*** new_slots_qs')
         print('* count:', new_slots_qs.count())
         for slot in new_slots_qs:
-            print(f'* {slot.submission_id:>02} ', slot)
+            print(
+                f'* {slot.submission_id:>02} ',
+                f'{str(slot.is_visible):<5} ',
+                slot
+            )
         print('***')
 
+        # print(f'*** old_slots_helper ({len(old_slots_helper)})')
+        # for slot in old_slots_helper:
+        #     print('*', slot)
+        # print(f'*** new_slots_helper ({len(new_slots_helper)})')
+        # for slot in new_slots_helper:
+        #     print('*', slot)
 
         test_slots_qs = self.talks.filter(
             # is_visible=True,
@@ -226,61 +227,16 @@ class Schedule(LogMixin, models.Model):
         print('*** test_slots_qs')
         print('* count:', test_slots_qs.count())
         for slot in test_slots_qs:
-            print(f'* {slot.submission_id:>02} ', slot)
+            print(
+                f'* {slot.submission_id:>02} ',
+                f'{str(slot.is_visible):<5} ',
+                slot
+            )
         print('***')
-
-        # print(f'*** old_slots_helper ({len(old_slots_helper)})')
-        # for slot in old_slots_helper:
-        #     print('*', slot)
-        # print(f'*** new_slots_helper ({len(new_slots_helper)})')
-        # for slot in new_slots_helper:
-        #     print('*', slot)
-
-        # print('')
-        # print(f'old_slots_helper_submission ({len(old_slots_helper_submission)})', old_slots_helper_submission)
-        # print(f'new_slots_helper_submission ({len(new_slots_helper_submission)})', new_slots_helper_submission)
-        # print(f'combined_helper_submissions ({len(combined_helper_submissions)})', combined_helper_submissions)
-        # print('')
-
-
-
 
 
 
         from pretalx.schedule.models import TalkSlot
-
-        # print('canceled_talks old - new')
-        # canceled_talks_helper = old_slots_helper - new_slots_helper
-        # for slot in canceled_talks_helper:
-        #     print('*', slot)
-        #     with suppress(AttributeError, TalkSlot.DoesNotExist):
-        #         result['canceled_talks'].append(old_slots_qs.get(
-        #             submission=slot.submission,
-        #             start=slot.start,
-        #             room=slot.room,
-        #         ))
-        #
-        # print('new_talks new - old')
-        # for slot in new_slots_helper - old_slots_helper:
-        #     print('*', slot)
-        #     with suppress(AttributeError, TalkSlot.DoesNotExist):
-        #         old_slot = old_slots_qs.get(
-        #             submission=slot.submission,
-        #             start=slot.start,
-        #             room=slot.room,
-        #         )
-        #         new_slot = new_slots_qs.get(
-        #             submission=slot.submission,
-        #             start=slot.start,
-        #             room=slot.room,
-        #         )
-        #         print('* → old', old_slot)
-        #         print('* → new', new_slot)
-        #         # check for move
-        #         # if old_:
-        #         #     pass
-        #         result['new_talks'].append(new_slot)
-
 
         slots_helper_already_handled = []
         from operator import attrgetter
@@ -289,43 +245,42 @@ class Schedule(LogMixin, models.Model):
             key=attrgetter('submission', 'room', 'start',)
         )
 
-        print(f'*** slots_helper_symetric_dif ({len(slots_helper_symetric_dif)})')
-        for slot_helper in slots_helper_symetric_dif:
-            print('*', slot_helper)
+        # print(f'*** slots_helper_symetric_dif ({len(slots_helper_symetric_dif)})')
+        # for slot_helper in slots_helper_symetric_dif:
+        #     print('*', slot_helper)
 
-        # slots_helper_symetric_dif__rooms_start = list(slot.start for slot in slots_helper_symetric_dif)
         slots_helper_symetric_dif__rooms_start = {}
         for slot_helper in slots_helper_symetric_dif:
             if slot_helper.room not in slots_helper_symetric_dif__rooms_start:
                 slots_helper_symetric_dif__rooms_start[slot_helper.room] = []
             slots_helper_symetric_dif__rooms_start[slot_helper.room].append(slot_helper.start)
 
-        print(f'*** slots_helper_symetric_dif__rooms_start ({len(slots_helper_symetric_dif__rooms_start)})')
-        for item in slots_helper_symetric_dif__rooms_start.items():
-            print('*', item)
+        # print(f'*** slots_helper_symetric_dif__rooms_start ({len(slots_helper_symetric_dif__rooms_start)})')
+        # for item in slots_helper_symetric_dif__rooms_start.items():
+        #     print('*', item)
 
         slots_helper_symetric_dif__room = list(slot.room for slot in slots_helper_symetric_dif)
 
-        print(f'*** slots_helper_symetric_dif__room ({len(slots_helper_symetric_dif__room)})')
-        for room_helper in slots_helper_symetric_dif__room:
-            print('*', room_helper)
+        # print(f'*** slots_helper_symetric_dif__room ({len(slots_helper_symetric_dif__room)})')
+        # for room_helper in slots_helper_symetric_dif__room:
+        #     print('*', room_helper)
 
 
         def search_nearest_match(slot, slots_qs, other_slots_qs, other_slots_helper):
             '''Search for nearest match in other_slots_qs.'''
 
-            print(f'. | rooms: {slots_helper_symetric_dif__room}')
-            for room in slots_helper_symetric_dif__rooms_start.items():
-                print(f'. | {room}')
+            # print(f'. | rooms: {slots_helper_symetric_dif__room}')
+            # for room in slots_helper_symetric_dif__rooms_start.items():
+            #     print(f'. | {room}')
 
             result = None
             rooms = slots_helper_symetric_dif__room[:]
             # start with own room
-            print('.  slot.room.id', slot.room.id)
+            # print('.  slot.room.id', slot.room.id)
             # print('.  rooms', rooms)
             room = rooms.pop(rooms.index(slot.room.id))
             rooms.insert(0, room)
-            print('.  rooms', rooms)
+            # print('.  rooms', rooms)
             rooms = iter(rooms)
             try:
                 room = next(rooms)
@@ -333,7 +288,7 @@ class Schedule(LogMixin, models.Model):
                 room = None
             run = True
             while run:
-                print('.   room:', room)
+                # print('.   room:', room)
                 result = search_nearest_in_room(
                     slot, slots_qs, other_slots_qs, other_slots_helper, room)
                 if not result:
@@ -345,29 +300,29 @@ class Schedule(LogMixin, models.Model):
                     run = False
 
             if result:
-                print('. |  room remove:', room)
+                # print('. |  room remove:', room)
                 slots_helper_symetric_dif__room.remove(slot.room.id)
                 slots_helper_symetric_dif__room.remove(room)
-                print(f'. | rooms: {slots_helper_symetric_dif__room}')
-                for room in slots_helper_symetric_dif__rooms_start.items():
-                    print(f'. | {room}')
+                # print(f'. | rooms: {slots_helper_symetric_dif__room}')
+                # for room in slots_helper_symetric_dif__rooms_start.items():
+                #     print(f'. | {room}')
             return result
 
         def search_nearest_in_room(slot, slots_qs, other_slots_qs, other_slots_helper, room):
             '''Search for nearest match in other_slots_qs with defined room.'''
             result = None
-            print(f'#   slots_helper_already_handled ({len(slots_helper_already_handled)})')
-            for item in slots_helper_already_handled:
-                print('#       ', item)
+            # print(f'#   slots_helper_already_handled ({len(slots_helper_already_handled)})')
+            # for item in slots_helper_already_handled:
+            #     print('#       ', item)
 
             temp_slots = other_slots_qs.filter(
                 submission=slot.submission,
                 room=room,
                 start__in=slots_helper_symetric_dif__rooms_start[room],
             )
-            print(f'#   temp_slots ({len(temp_slots)})')
-            for item in temp_slots:
-                print('#       ', item)
+            # print(f'#   temp_slots ({len(temp_slots)})')
+            # for item in temp_slots:
+            #     print('#       ', item)
             temp_slots_namedtuple = list(temp_slots.values_list(
                 'submission',
                 'room',
@@ -388,9 +343,9 @@ class Schedule(LogMixin, models.Model):
                 #     index += 1
                 #     temp_slot_namedtuple = temp_slots_namedtuple[index]
                 #     temp_slot = temp_slots[index]
-                print('#   temp_slot_namedtuple', temp_slot_namedtuple)
+                # print('#   temp_slot_namedtuple', temp_slot_namedtuple)
                 if (temp_slot_namedtuple in other_slots_helper):
-                    print('#   found!')
+                    # print('#   found!')
                     # print('#   : room', room)
                     # print('#   : slot.room.id', slot.room.id)
                     # print('#   : slot.start', slot.start)
@@ -415,7 +370,7 @@ class Schedule(LogMixin, models.Model):
         print('handle this')
         for slot_helper in slots_helper_symetric_dif:
             print('*'*42)
-            print('*** ', slot_helper)
+            print('* ', slot_helper)
             if slot_helper not in slots_helper_already_handled:
                 # get original database entries
                 old_slot = None
@@ -438,23 +393,10 @@ class Schedule(LogMixin, models.Model):
                     pass
                 print('* → old', old_slot)
                 print('* → new', new_slot)
-                # print('* check what to do:')
-                # print('* . slot_helper.submission', slot_helper.submission)
-                # print('* . slot_helper.submission not in new_slots_helper_submission', slot_helper.submission not in new_slots_helper_submission)
-                # print('* . slot_helper.submission not in old_slots_helper_submission', slot_helper.submission not in old_slots_helper_submission)
-                # if old_slot and (slot_helper.submission not in new_slots_helper_submission):
-                #     # check for canceled
-                #     print('* → → canceled')
-                #     slots_helper_already_handled.append(slot_helper)
-                #     result['canceled_talks'].append(old_slot)
-                # elif new_slot and slot_helper.submission not in old_slots_helper_submission:
-                #     # check for new
-                #     print('* → → new')
-                #     slots_helper_already_handled.append(slot_helper)
-                #     result['new_talks'].append(new_slot)
+                print('* search other...')
                 # find first element from other set that matches the submission
                 if new_slot:
-                    print('*  we have new_slot so let us search for old_slot...')
+                    # print('*  we have new_slot so let us search for old_slot...')
                     old_slot = search_nearest_match(
                         new_slot,
                         new_slots_qs,
@@ -462,7 +404,7 @@ class Schedule(LogMixin, models.Model):
                         old_slots_helper
                     )
                 elif old_slot:
-                    print('*  we have old_slot so let us search for new_slot...')
+                    # print('*  we have old_slot so let us search for new_slot...')
                     new_slot = search_nearest_match(
                         old_slot,
                         old_slots_qs,
@@ -471,6 +413,7 @@ class Schedule(LogMixin, models.Model):
                     )
                 print('* → old', old_slot)
                 print('* → new', new_slot)
+                print('* check what to do:')
                 # if we have found both this is a move.
                 if old_slot and new_slot:
                     print('* → → moved')
@@ -498,9 +441,9 @@ class Schedule(LogMixin, models.Model):
                     raise Exception('slot not found! - uhh - that should never happen!')
             else:
                 print('* skip! (already handled)')
-            print(f'* slots_helper_already_handled ({len(slots_helper_already_handled)})')
-            for item in slots_helper_already_handled:
-                print('*   ', item)
+            # print(f'* slots_helper_already_handled ({len(slots_helper_already_handled)})')
+            # for item in slots_helper_already_handled:
+            #     print('*   ', item)
 
         print('')
         print('*'*42)
