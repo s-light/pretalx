@@ -186,25 +186,25 @@ class Schedule(LogMixin, models.Model):
             named=True
         ))
 
-        print('*** old_slots_qs')
-        print('* count:', old_slots_qs.count())
-        for slot in old_slots_qs:
-            print(
-                f'* {slot.submission_id:>02} ',
-                f'{str(slot.is_visible):<5} ',
-                slot
-            )
-        print('***')
-
-        print('*** new_slots_qs')
-        print('* count:', new_slots_qs.count())
-        for slot in new_slots_qs:
-            print(
-                f'* {slot.submission_id:>02} ',
-                f'{str(slot.is_visible):<5} ',
-                slot
-            )
-        print('***')
+        # print('*** old_slots_qs')
+        # print('* count:', old_slots_qs.count())
+        # for slot in old_slots_qs:
+        #     print(
+        #         f'* {slot.submission_id:>02} ',
+        #         f'{str(slot.is_visible):<5} ',
+        #         slot
+        #     )
+        # print('***')
+        #
+        # print('*** new_slots_qs')
+        # print('* count:', new_slots_qs.count())
+        # for slot in new_slots_qs:
+        #     print(
+        #         f'* {slot.submission_id:>02} ',
+        #         f'{str(slot.is_visible):<5} ',
+        #         slot
+        #     )
+        # print('***')
 
         # print(f'*** old_slots_helper ({len(old_slots_helper)})')
         # for slot in old_slots_helper:
@@ -365,12 +365,12 @@ class Schedule(LogMixin, models.Model):
                     result =  temp_slot
             return result
 
-        print('')
-        print('*'*42)
-        print('handle this')
+        # print('')
+        # print('*'*42)
+        # print('handle this')
         for slot_helper in slots_helper_symetric_dif:
-            print('*'*42)
-            print('* ', slot_helper)
+            # print('*'*42)
+            # print('* ', slot_helper)
             if slot_helper not in slots_helper_already_handled:
                 # get original database entries
                 old_slot = None
@@ -391,9 +391,9 @@ class Schedule(LogMixin, models.Model):
                     )
                 except TalkSlot.DoesNotExist as e:
                     pass
-                print('* → old', old_slot)
-                print('* → new', new_slot)
-                print('* search other...')
+                # print('* → old', old_slot)
+                # print('* → new', new_slot)
+                # print('* search other...')
                 # find first element from other set that matches the submission
                 if new_slot:
                     # print('*  we have new_slot so let us search for old_slot...')
@@ -411,12 +411,12 @@ class Schedule(LogMixin, models.Model):
                         new_slots_qs,
                         new_slots_helper
                     )
-                print('* → old', old_slot)
-                print('* → new', new_slot)
-                print('* check what to do:')
+                # print('* → old', old_slot)
+                # print('* → new', new_slot)
+                # print('* check what to do:')
                 # if we have found both this is a move.
                 if old_slot and new_slot:
-                    print('* → → moved')
+                    # print('* → → moved')
                     slots_helper_already_handled.append(slot_helper)
                     result['moved_talks'].append(
                         {
@@ -429,18 +429,18 @@ class Schedule(LogMixin, models.Model):
                         }
                     )
                 elif old_slot and not new_slot:
-                    print('* → → canceled')
+                    # print('* → → canceled')
                     slots_helper_already_handled.append(slot_helper)
                     result['canceled_talks'].append(old_slot)
                 elif not old_slot and new_slot:
                     # check for new
-                    print('* → → new')
+                    # print('* → → new')
                     slots_helper_already_handled.append(slot_helper)
                     result['new_talks'].append(new_slot)
                 else:
                     raise Exception('slot not found! - uhh - that should never happen!')
-            else:
-                print('* skip! (already handled)')
+            # else:
+            #     print('* skip! (already handled)')
             # print(f'* slots_helper_already_handled ({len(slots_helper_already_handled)})')
             # for item in slots_helper_already_handled:
             #     print('*   ', item)
